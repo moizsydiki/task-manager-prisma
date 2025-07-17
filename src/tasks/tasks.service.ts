@@ -1,50 +1,50 @@
-import { v4 as uuid } from 'uuid';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { Task } from './modesl/task.model';
+import { TaskStatus } from '../../generated/prisma';
+import { Prisma, Task } from '../../generated/prisma';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TasksService {
-  private tasks: Task[] = [];
+  constructor(private prisma: PrismaService) {}
 
-  create(createTaskDto: CreateTaskDto): Task {
-    const newTask: Task = {
-      id: uuid(),
-      ...createTaskDto,
+  async create(createTaskDto: CreateTaskDto): Promise<Task> {
+    const data: Prisma.TaskCreateInput = {
+      title: createTaskDto.title,
+      description: createTaskDto.description,
+      status: createTaskDto.status ?? TaskStatus.PENDING,
     };
 
-    this.tasks.push(newTask);
-    return newTask;
+    return this.prisma.task.create({ data });
+  }
+  v;
+
+  async findAll(): Promise<Task[]> {
+    return this.prisma.task.findMany();
   }
 
-  findAll(): Task[] {
-    return this.tasks;
-  }
-
-  findOne(id: string): Task {
-    const task = this.tasks.find((t) => t.id === id);
-    if (!task) throw new NotFoundException(`Task with ${id} is not found`);
+  async findOne(id: string): Promise<Task> {
+    const task = await this.prisma.task.findUnique({ where: { id } });
+    if (!task) {
+      throw new NotFoundException(`Task with id:${id} not found`);
+    }
     return task;
   }
 
-  update(id: string, updateTaskDto: UpdateTaskDto): Task {
-    const task = this.findOne(id);
+  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
+    await this.findOne(id);
 
-    const updatedTask = {
-      ...task,
-      ...updateTaskDto,
-    };
-
-    const index = this.tasks.findIndex((t) => t.id === id);
-    this.tasks[index] = updatedTask;
-
-    return updatedTask;
+    return this.prisma.task.update({
+      where: { id },
+      data: updateTaskDto,
+    });
   }
 
-  remove(id: string): void {
-    const found = this.findOne(id);
-    this.tasks = this.tasks.filter((t) => t.id !== found.id);
+  async remove(id: string): Promise<void> {
+    await this.findOne(id);
+
+    await this.prisma.task.delete({ where: { id } });
   }
 }
