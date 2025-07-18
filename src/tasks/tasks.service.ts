@@ -15,11 +15,13 @@ export class TasksService {
       title: createTaskDto.title,
       description: createTaskDto.description,
       status: createTaskDto.status ?? TaskStatus.PENDING,
+      user: {
+        connect: { id: createTaskDto.userId },
+      },
     };
 
     return this.prisma.task.create({ data });
   }
-  v;
 
   async findAll(): Promise<Task[]> {
     return this.prisma.task.findMany();

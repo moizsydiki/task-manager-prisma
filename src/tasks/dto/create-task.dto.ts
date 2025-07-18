@@ -1,4 +1,10 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsUUID,
+  IsString,
+  IsOptional,
+  IsNotEmpty,
+} from 'class-validator';
 
 import { TaskStatus } from '../../../generated/prisma';
 
@@ -13,4 +19,7 @@ export class CreateTaskDto {
 
   @IsEnum(TaskStatus)
   status?: TaskStatus;
+
+  @IsUUID()
+  userId: string;
 }
